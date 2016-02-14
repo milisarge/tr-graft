@@ -1,0 +1,499 @@
+'\" t
+.\"
+.\" $Id: graft.man,v 2.7 2015/11/20 20:51:19 psamuel Exp $
+.\"
+.TH GRAFT 1 "20 November 2015"
+.SH NAME
+graft \- duplicate directory trees using symbolic links
+.SH SYNOPSIS
+.B graft
+.I -i
+.RI [ -C ]
+.if xSUPERUSERx .RI [ -P | u ]
+.RI [ -l
+.IR log ]
+.RI [ -n ]
+.RI [ -v | V ]
+.RI [ -s | -t
+.IR target ]
+.I package(s) ...
+.br
+.B graft
+.I -d
+.RI [ -D ]
+.if xSUPERUSERx .RI [ -u ]
+.RI [ -l
+.IR log ]
+.RI [ -n ]
+.RI [ -v | V ]
+.RI [ -s | -t
+.IR target ]
+.I package(s) ...
+.br
+.B graft
+.I -p
+.RI [ -D ]
+.if xSUPERUSERx .RI [ -u ]
+.RI [ -l
+.IR log ]
+.RI [ -n ]
+.RI [ -v | V ]
+.RI [ -s | -t
+.IR target ]
+.I package(s) ...
+.SH DESCRIPTION
+.B graft
+duplicates one or more directory trees from a source location to a target
+location. Each directory tree will typically contain all the files for a
+particular software package. Multiple packages can be specified in a single
+invocation of
+.B graft
+as shown in the synopsis above.
+
+It is expected that packages will be compiled so that, where relevant, they
+can locate their package specific files in directories that are specific to
+the package itself. For example the \fCa2ps-1.4.14\fP package will be
+compiled and installed in \fCxPACKAGEDIRx/a2ps-1.4.14\fP and it will look
+for its style sheets in \fCxPACKAGEDIRx/a2ps-1.4.14/sheets\fP.
+
+.B graft
+will typically be used to duplicate the directory trees of many
+disparate packages into a single common area so that search paths can
+be minimised. For example the \fCa2ps-1.4.14\fP package mentioned above
+will be
+.I grafted
+into \fCxTARGETDIRx\fP so that the executable file will be found at
+\fCxTARGETDIRx/bin/a2ps\fP.
+
+Directories are created as needed. Symbolic links from target files to
+source files are created as needed. A file is considered to be anything
+that is not a directory.
+
+When installing a directory tree,
+.B graft
+will bypass a directory if it contains a file called
+.IR xGRAFT-IGNOREx .
+
+When installing a directory tree,
+if a directory contains a file called
+.IR xGRAFT-EXCLUDEx ,
+.B graft
+will exclude files and/or directories from the directory if they are
+listed in the
+.I xGRAFT-EXCLUDEx
+file. The
+.I xGRAFT-EXCLUDEx
+file should contain a list of files and/or directories to be excluded,
+one file or directory name per line. Entries that do not match files
+and/or directories in the directory containing the
+.I xGRAFT-EXCLUDEx
+file will be ignored by
+.BR graft .
+The processing of
+.I xGRAFT-IGNOREx
+files takes precedence over the processing of
+.I xGRAFT-EXCLUDEx
+files.
+
+When installing a directory tree,
+if a directory contains a file called
+.IR xGRAFT-INCLUDEx ,
+.B graft
+will include
+.B only
+those files and/or directories listed in the
+.I xGRAFT-INCLUDEx
+file. The
+.I xGRAFT-INCLUDEx
+file should contain a list of files and/or directories to be included,
+one file or directory name per line. Entries that do not match files
+and/or directories in the directory containing the
+.I xGRAFT-INCLUDEx
+file will be ignored by
+.BR graft .
+Note that an empty
+.I xGRAFT-INCLUDEx
+file will force
+.B graft
+to behave as if the directory contained a
+.I xGRAFT-IGNOREx
+file.
+The processing of
+.I xGRAFT-EXCLUDEx
+files takes precedence over the processing of
+.I xGRAFT-INCLUDEx
+files.
+
+If a file or directory is listed in both a
+.I xGRAFT-INCLUDEx
+and
+.I xGRAFT-EXCLUDEx
+file, it will be
+.BR excluded .
+.if xNEVERGRAFTx
+.if xNEVERGRAFTx When installing a directory tree,
+.if xNEVERGRAFTx .B graft
+.if xNEVERGRAFTx will always exclude files and/or directories whose names exactly match
+.if xNEVERGRAFTx one of the following:
+.if xNEVERGRAFTx
+.if xNEVERGRAFTx .in 1i
+.if xNEVERGRAFTx .I xGRAFT-NEVERx
+.if xNEVERGRAFTx .if 'xGRAFT-NEVERx'' .I *** No file or directory names to match ***
+.if xNEVERGRAFTx .in
+.if xNEVERGRAFTx
+.if xNEVERGRAFTx The presence of a
+.if xNEVERGRAFTx .I xGRAFT-IGNOREx
+.if xNEVERGRAFTx or
+.if xNEVERGRAFTx .I xGRAFT-INCLUDEx
+.if xNEVERGRAFTx file overrides this feature.
+
+When installing a directory tree,
+.B graft
+will fail if it encounters a conflict. A conflict occurs when a
+target object exists and is not the same type as the source object
+according to the following table:
+
+.TS
+center;
+lB lB
+l l.
+Source Object	Target Object
+_
+directory	not a directory
+file	directory
+file	file
+file	T{
+symbolic link to something other than the source object
+T}
+.TE
+
+When deleting directory trees,
+.B graft
+will
+.B not
+fail if it encounters a conflict.
+
+When deleting directory trees,
+.B graft
+will continue to process a directory without regard to the contents of
+either a
+.I xGRAFT-IGNOREx
+or a
+.I xGRAFT-EXCLUDEx
+or a
+.I xGRAFT-INCLUDEx
+file.
+
+When pruning directory trees,
+.B graft
+will
+.if !xDELETEOBJECTSx rename
+.if xDELETEOBJECTSx remove
+files and directories which will conflict with the installation of the
+package.
+.if !xDELETEOBJECTSx The new file name will be \fIfilexPRUNED-SUFFIXx\fP.
+.if xDELETEOBJECTSx If the directory to be removed is not empty, it
+.if xDELETEOBJECTSx will be renamed \fIdirxPRUNED-SUFFIXx\fP.
+
+When pruning directory trees,
+.B graft
+will continue to process a directory without regard to the contents of
+either a
+.I xGRAFT-IGNOREx
+or a
+.I xGRAFT-EXCLUDEx
+or a
+.I xGRAFT-INCLUDEx
+file.
+
+.B graft
+records its actions in a log file. The log file contains a time stamp,
+the
+.B graft
+version number (a trailing
+.B +
+character indicates a development version), the type of
+.B graft
+action that was performed, the package installation directory and the
+.B graft
+target directory. If a conflict arises during the processing of a
+package, another log entry will be made with a qualifying
+.B C
+character added to the type indicator. The following is an example
+extract of a
+.B graft
+log file.
+
+.TS
+center;
+l l l l l.
+878790215	1.10+	I	xPACKAGEDIRx/cpio-2.4.2	xTARGETDIRx
+878799501	1.10+	I	xPACKAGEDIRx/byteyears-1.0	xTARGETDIRx
+878888916	2.1	I	xPACKAGEDIRx/gzip-1.2.4	xTARGETDIRx
+878888916	2.1	IC	xPACKAGEDIRx/gzip-1.2.4/bin/gzip	invalid symlink
+878889045	2.1	D	xPACKAGEDIRx/gzip-1.2.4	xTARGETDIRx
+878889054	2.1	P	xPACKAGEDIRx/gzip-1.2.4	xTARGETDIRx
+878889063	2.1	I	xPACKAGEDIRx/gzip-1.2.4	xTARGETDIRx
+.TE
+
+This shows that a development version of
+.B graft
+(1.10+) was used to install symbolic links from
+.I xPACKAGEDIRx/cpio-2.4.2
+and
+.I xPACKAGEDIRx/byteyears-1.0
+to
+.IR xTARGETDIRx .
+A new version of
+.B graft
+(2.1) was used to install symbolic links from
+.I xPACKAGEDIRx/gzip-1.2.4
+to
+.IR xTARGETDIRx .
+A conflict occurred during this installation, the file
+.I xTARGETDIRx/bin/gzip
+was a symbolic link to something other than
+.IR xPACKAGEDIRx/gzip-1.2.4/bin/gzip .
+The package was deleted and then pruned before being re-installed
+shortly afterwards.
+.SH OPTIONS
+.TP
+.I -i
+Install the named package(s).
+.if xSUPERUSERx Requires super user privileges.
+Cannot be used with the
+.I -d
+or
+.I -p
+options.
+.if xNEVERGRAFTx .TP
+.if xNEVERGRAFTx .I -C
+.if xNEVERGRAFTx Disable the automatic exclusion of files and/or
+.if xNEVERGRAFTx directories whose names exactly match:
+.if xNEVERGRAFTx
+.if xNEVERGRAFTx .in 1.5i
+.if xNEVERGRAFTx .I xGRAFT-NEVERx
+.if xNEVERGRAFTx .if 'xGRAFT-NEVERx'' .I *** No file or directory names to match ***
+.if xNEVERGRAFTx .in
+.if xNEVERGRAFTx
+.if xNEVERGRAFTx Can only be used with the
+.if xNEVERGRAFTx .I -i
+.if xNEVERGRAFTx option. This option is ignored for each
+.if xNEVERGRAFTx .I grafted
+.if xNEVERGRAFTx directory, if the directory contains a
+.if xNEVERGRAFTx .I xGRAFT-IGNOREx
+.if xNEVERGRAFTx or
+.if xNEVERGRAFTx .I xGRAFT-INCLUDEx
+.if xNEVERGRAFTx file.
+.if !xNEVERGRAFTx .TP
+.if !xNEVERGRAFTx .I -C
+.if !xNEVERGRAFTx Force the automatic exclusion of files and/or
+.if !xNEVERGRAFTx directories whose names exactly match:
+.if !xNEVERGRAFTx
+.if !xNEVERGRAFTx .in 1.5i
+.if !xNEVERGRAFTx .I xGRAFT-NEVERx
+.if !xNEVERGRAFTx .if 'xGRAFT-NEVERx'' .I *** No file or directory names to match ***
+.if !xNEVERGRAFTx .in
+.if !xNEVERGRAFTx
+.if !xNEVERGRAFTx Can only be used with the
+.if !xNEVERGRAFTx .I -i
+.if !xNEVERGRAFTx option. This option is ignored for each
+.if !xNEVERGRAFTx .I grafted
+.if !xNEVERGRAFTx directory, if the directory contains a
+.if !xNEVERGRAFTx .I xGRAFT-IGNOREx
+.if !xNEVERGRAFTx or
+.if !xNEVERGRAFTx .I xGRAFT-INCLUDEx
+.if !xNEVERGRAFTx file.
+.if xSUPERUSERx .TP
+.if xSUPERUSERx .I -P
+.if xSUPERUSERx .if !xPRESERVEPERMSx Create directories with the same
+.if xSUPERUSERx .if !xPRESERVEPERMSx owner, group and permissions as
+.if xSUPERUSERx .if !xPRESERVEPERMSx the original.
+.if xSUPERUSERx .if xPRESERVEPERMSx Do not create directories with the same
+.if xSUPERUSERx .if xPRESERVEPERMSx owner, group and permissions as
+.if xSUPERUSERx .if xPRESERVEPERMSx original.
+.if xSUPERUSERx Can only be used with the
+.if xSUPERUSERx .I -i
+.if xSUPERUSERx option.
+.if xSUPERUSERx Cannot be used with the
+.if xSUPERUSERx .I -u
+.if xSUPERUSERx option.
+.if xSUPERUSERx .if !xPRESERVEPERMSx
+.if xSUPERUSERx .if !xPRESERVEPERMSx This option will be silently ignored if
+.if xSUPERUSERx .if !xPRESERVEPERMSx the effective user is not root.
+.TP
+.I -d
+Delete the named package(s).
+.if xSUPERUSERx Requires super user privileges.
+Cannot be used with the
+.I -i
+or
+.I -p
+options.
+.TP
+.I -p
+Prune files that will conflict with the grafting of the named
+package(s).
+.if xSUPERUSERx Requires superuser privileges.
+Cannot be used with
+.I -d
+or
+.I -i
+options.
+
+This function allows you to
+.if xDELETEOBJECTSx remove
+.if !xDELETEOBJECTSx rename
+files that may conflict with the
+.I grafted
+location.
+.if xDELETEOBJECTSx Files found to be in conflict will be
+.if xDELETEOBJECTSx renamed as \fIfilexPRUNED-SUFFIXx\fP.
+.TP
+.I -D
+When used with the
+.I -d
+option,
+.if xDELETEOBJECTSx do not remove directories made empty by package
+.if xDELETEOBJECTSx deletion. When used with the \fI-p\fP option,
+.if xDELETEOBJECTSx rename conflicting files or directories to
+.if xDELETEOBJECTSx \fIfilexPRUNED-SUFFIXx\fP.
+.if !xDELETEOBJECTSx remove directories made empty by package
+.if !xDELETEOBJECTSx deletion. When used with the \fI-p\fP option,
+.if !xDELETEOBJECTSx remove conflicting files or directories instead
+.if !xDELETEOBJECTSx of renaming them as \fIfilexPRUNED-SUFFIXx\fP. If the
+.if !xDELETEOBJECTSx directory is not empty it will be renamed as
+.if !xDELETEOBJECTSx \fIdirxPRUNED-SUFFIXx\fP.
+Cannot be used with the
+.I -i
+option.
+.if xSUPERUSERx .TP
+.if xSUPERUSERx .I -u
+.if xSUPERUSERx Superuser privileges are not required to install,
+.if xSUPERUSERx delete or prune packages. Cannot be used with the
+.if xSUPERUSERx .I -P
+.if xSUPERUSERx option.
+.TP
+.I -l log
+Use the named file as the log file instead of the default log file. The
+log file name must be fully qualified. The log file is not used if the
+.I -n
+option is also supplied. Default:
+.B xLOGFILEx
+.TP
+.I -n
+Print a list of operations but do NOT perform them. Automatically
+implies the very verbose option.
+.if xSUPERUSERx Does not require superuser privileges.
+.TP
+.I -v
+Be verbose.
+.TP
+.I -V
+Be very verbose.
+.TP
+.I -s
+Stow/Depot compatibility mode. Infer the
+.B graft
+target directory from
+each package installation directory in the manner of
+.B Stow and
+.BR Depot .
+Cannot be used with the
+.I -t
+option.
+.TP
+.I -t target
+Use the named directory as the
+.B graft
+target directory rather than the
+default target directory. The target directory must be fully
+qualified. Cannot be used with the
+.I -s
+option. Default:
+.B xTARGETDIRx
+.TP
+.I package(s) ...
+Operate on the named package(s). If the package name is not fully
+qualified, the default package installation directory will be prepended
+to the named package. Default:
+.B xPACKAGEDIRx
+.SH EXAMPLES
+Here are some simple examples for using
+.BR graft .
+The examples assume that you have installed the packages into self
+contained directory trees in
+.B xPACKAGEDIRx
+and they will be
+.I grafted
+into
+.BR xTARGETDIRx .
+
+To
+.I graft
+the installed packages \fCxPACKAGEDIRx/exiftool-7.4.3\fP,
+\fCxPACKAGEDIRx/rrdtool-1.2.23\fP and \fCxPACKAGEDIRx/mbuffer-20140126\fP
+to \fCxTARGETDIRx/bin\fP etc:
+
+    graft -i exiftool-7.4.3 rrdtool-1.2.23 mbuffer-20140126
+
+To upgrade \fCexiftool\fP to the newer \fCImage-Exiftool-9.78\fP package
+you would first delete the symbolic links to the first package and create
+new symbolic links to the updated package:
+
+    graft -d exiftool-7.4.3
+    graft -i Image-ExifTool-9.78
+
+Prior to installing the new version of \fChtop\fP which you compiled such
+that it is
+.B graft
+compatible, you wish to
+.if xDELETEOBJECTSx remove the existing binary \fCxTARGETDIRx/bin/htop\fP:
+.if !xDELETEOBJECTSx rename the existing binary \fCxTARGETDIRx/bin/htop\fP
+.if !xDELETEOBJECTSx to \fCxTARGETDIRx/bin/htopxPRUNED-SUFFIXx\fP:
+
+    graft -p htop-1.02
+
+.SH EXIT STATUS
+.B graft
+will terminate with an exit status of either 0, 1, 2 or 3 under the
+following conditions:
+
+.TS
+center;
+cB cB
+c lw(3c).
+Exit Status	Condition
+_
+0	All operations succeeded.
+1	A conflict occurred during installation.
+2	Command line syntax was incorrect.
+3	T{
+One or more packages listed on the command line does not exist. Other
+valid packages listed on the command line were processed correctly.
+T}
+4	T{
+The log file \fCxLOGFILEx\fP could not be updated. Usually a result of a
+permission error. Any other error condition will override this condition.
+T}
+.TE
+.SH VERSION
+Version xVERSIONx
+.SH AUTHOR
+Peter Samuel
+.br
+<peter.r.samuel@gmail.com>
+.SH LICENSE
+.B graft
+is licensed under the terms of the
+.I GNU General Public License, Version 2, June 1991.
+.SH AVAILABILITY
+The latest version of
+.B graft
+should always be available from
+.I http://peters.gormand.com.au/Home/tools/graft
+.SH SEE ALSO
+.I Graft - a package management utility
+.br
+This documentation is available in HTML, PostScript, PDF and text formats
+in xDOCx.

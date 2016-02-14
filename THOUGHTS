@@ -1,0 +1,36 @@
+Things to think about for the next release of graft
+---------------------------------------------------
+
+[I've removed some of the THOUGHTS because I have either implemented them
+(see CHANGES) or I won't be implementing them at all.]
+
+In no specific order ...
+
+###########################################################################
+
+Create a test harness so that
+
+    make test
+
+can be used. Useful for regresion testing and bug fixing.
+
+Also think about using the Test::Simple and Test::More test harnesses
+which ship with Perl. After looking at these modules, I'm not sure if
+they'll work for me.
+
+###########################################################################
+
+If there are no files to never graft (eg RCS, CVS etc) should we even have
+the -C option in the usage() and man pages?
+
+###########################################################################
+
+Investigate a file remapping feature - ie graft files with a different
+name. Could be useful for avoiding conflicts and for forcing file name
+prefixes for preinstalled packages. Eg
+
+    /pkgs/bin/gmake	-> /pkgs/gmake-3.5.6/bin/make
+
+Will require double processing for deletion and pruning
+
+###########################################################################
